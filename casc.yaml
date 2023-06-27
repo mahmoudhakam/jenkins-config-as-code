@@ -1,0 +1,50 @@
+# jenkins-casc.yaml
+
+jenkins:
+  systemMessage: "Jenkins configured automatically by Jenkins Configuration as Code plugin\n\n"
+  # enable the agent to controller access control, to be able to control which commands and files the agents have access to
+  remotingSecurity:
+    enabled: true
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin"
+        - id: "dev"
+          password: "dev"
+  # authorizationStrategy: loggedInUsersCanDoAnything
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Job/Build:dev"
+        - "Job/Cancel:dev"
+        - "Job/Read:dev"
+        - "Job/Workspace:dev"
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+        - "Run/Replay:dev"
+        - "Run/Update:dev"
+
+  # make sure our jenkins master has 1 executor so that we can run our pipelines
+  numExecutors: 1
+
+# Set Jenkins to run all the jobs with the same user as the user has triggered to avoid privilege escalation
+security:
+  queueItemAuthenticator:
+    authenticators:
+      - global:
+         strategy: triggeringUsersAuthorizationStrategy
+
+
+  # specify the seedjob groovy script that will create the  pipelines for us
+jobs:
+  - file: /usr/local/seedjob.groovy
+
+tool:
+  git:
+    installations:
+      - name: git
+        home: /usr/local/bin/git
+
